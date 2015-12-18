@@ -2,6 +2,7 @@
 'use strict';
 
 var TraceKit = require('../vendor/TraceKit/tracekit');
+var ErrorStackParser = require('error-stack-parser');
 var RavenConfigError = require('./configError');
 var utils = require('./utils');
 
@@ -295,8 +296,16 @@ Raven.prototype = {
         // raises an exception different from the one we asked to
         // report on.
         try {
-            var stack = TraceKit.computeStackTrace(ex);
-            this._handleStackInfo(stack, options);
+            var oldStack = TraceKit.computeStackTrace(ex);
+
+            var newStack = this._createSentryException(ex);
+
+            //'name': ex.name,
+            //  'message': lines[0],
+            //  'url': getLocationHref(),
+            //  'stack': stack
+            this._handleStackInfo(newStack, options);
+            this._handleStackInfo(oldStack, options);
         } catch(ex1) {
             if(ex !== ex1) {
                 throw ex1;
@@ -498,6 +507,25 @@ Raven.prototype = {
     },
 
     /**** Private functions ****/
+    _createSentryException: function (ex) {
+        var espStack = ErrorStackParser.parse(ex);
+        var stack = [];
+        each(espStack, function(_, frame) {
+            stack.push({
+                column: frame.columnNumber,
+                line: frame.lineNumber,
+                func: frame.functionName,
+                url: frame.fileName
+            })
+        });
+        return  {
+            name: ex.name,
+            message: ex.message + ' (ErrorStackParser)',
+            url: document.location.href,
+            stack: stack
+        };
+    },
+
     _ignoreNextOnError: function () {
         this._ignoreOnError += 1;
         setTimeout(function () {
