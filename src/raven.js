@@ -508,22 +508,36 @@ Raven.prototype = {
 
     /**** Private functions ****/
     _createSentryException: function (ex) {
-        var espStack = ErrorStackParser.parse(ex);
-        var stack = [];
-        each(espStack, function(_, frame) {
-            stack.push({
-                column: frame.columnNumber,
-                line: frame.lineNumber,
-                func: frame.functionName,
-                url: frame.fileName
-            })
-        });
-        return  {
+
+        var obj = {
             name: ex.name,
             message: ex.message + ' (ErrorStackParser)',
-            url: document.location.href,
-            stack: stack
+            url: document.location.href
         };
+
+        var espStack = null;
+        try {
+            // ErrorStackParser.parse will throw if stack cannot
+            // be parsed (e.g. IE8/9)
+            var espStack = ErrorStackParser.parse(ex);
+        } catch (e) {}
+
+        var stack = [];
+        if (espStack) {
+            // convert from ErrorStackParser format to internal
+            // Sentry format
+            each(espStack, function(_, frame) {
+                stack.push({
+                    column: frame.columnNumber,
+                    line: frame.lineNumber,
+                    func: frame.functionName,
+                    url: frame.fileName
+                })
+            });
+            obj.stack = stack;
+        }
+
+        return obj;
     },
 
     _ignoreNextOnError: function () {
