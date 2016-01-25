@@ -18,7 +18,7 @@ var urlencode = utils.urlencode;
 var uuid4 = utils.uuid4;
 
 var dsnKeys = 'source protocol user pass host port path'.split(' '),
-    dsnPattern = /^(?:(\w+):)?\/\/(?:(\w+)(:\w+)?@)?([\w\.-]+)(?::(\d+))?(\/.*)/;
+    dsnPattern = /^(?:(\w+):)?\/\/(?:(\w*?)?(:\w*?)?@?)??([\w\.-]+)(?::(\d+))?((?:\/.*)?)/;
 
 function now() {
     return +new Date();
@@ -131,8 +131,7 @@ Raven.prototype = {
 
         this._globalServer = this._getGlobalServer(uri);
 
-        this._globalEndpoint = this._globalServer +
-            '/' + path + 'api/' + this._globalProject + '/store/';
+        this._globalEndpoint = this._globalServer + uri.path;
 
         if (this._globalOptions.fetchContext) {
             TraceKit.remoteFetching = true;
