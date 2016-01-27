@@ -46,6 +46,7 @@ function Raven() {
         crossOrigin: 'anonymous',
         collectWindowErrors: true,
         maxMessageLength: 0,
+        project: 0,
         stackTraceLimit: 50
     };
     this._ignoreOnError = 0;
@@ -127,7 +128,7 @@ Raven.prototype = {
         this._globalOptions.includePaths = joinRegExp(this._globalOptions.includePaths);
 
         this._globalKey = uri.user;
-        this._globalProject = uri.path.substr(lastSlash + 1);
+        this._globalProject = this._globalOptions.project;
 
         this._globalServer = this._getGlobalServer(uri);
 
